@@ -1,0 +1,35 @@
+{
+  "name": "youtube-playables-collection",
+  "version": "1.0.0",
+  "description": "Collection of YouTube Playable games",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server . -p 8080 -c-1",
+    "dev": "npx http-server . -p 8080 -c-1 -o",
+    "python": "python3 -m http.server 8080",
+    "build": "echo 'No build process needed for static games'",
+    "test": "echo 'Open games in browser to test'"
+  },
+  "keywords": [
+    "youtube",
+    "playables",
+    "games",
+    "coin-runner",
+    "endless-runner",
+    "webgl",
+    "html5"
+  ],
+  "author": "Alg",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anuplalgupta/youtube-playables.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anuplalgupta/youtube-playables/issues"
+  },
+  "homepage": "https://github.com/anuplalgupta/youtube-playables#readme"
+}
