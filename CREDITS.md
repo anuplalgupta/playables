@@ -35,7 +35,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Contact
 - GitHub: [@anuplalgupta](https://github.com/anuplalgupta)
-- Issues: [GitHub Issues](https://github.com/anuplalgupta/youtube-playables/issues)
+- Issues: [GitHub Issues](https://github.com/anuplalgupta/playables/issues)
 
 ---
 
