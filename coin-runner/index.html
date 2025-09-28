@@ -444,8 +444,30 @@
             initGame();
         }
 
+        // Animation variables
+        let animationTime = 0;
+
+        // Polyfill for roundRect (for older browsers)
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+
         // Render game
         function render() {
+            animationTime += 0.1;
+            
             // Clear canvas
             ctx.fillStyle = '#87CEEB';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -466,37 +488,180 @@
                 ctx.stroke();
             });
 
-            // Draw obstacles
-            ctx.fillStyle = '#FF5722';
+            // Draw obstacles with animated shapes
             obstacles.forEach(obstacle => {
-                ctx.fillRect(obstacle.x - obstacle.width/2, obstacle.y, obstacle.width, obstacle.height);
+                drawAnimatedObstacle(obstacle);
             });
 
-            // Draw coins
-            ctx.fillStyle = '#FFD700';
+            // Draw coins with animation
             coinList.forEach(coin => {
                 if (!coin.collected) {
-                    ctx.beginPath();
-                    ctx.arc(coin.x, coin.y, coin.width/2, 0, Math.PI * 2);
-                    ctx.fill();
+                    drawAnimatedCoin(coin);
                 }
             });
 
-            // Draw player
-            ctx.fillStyle = '#2196F3';
-            const playerHeight = player.isSliding ? player.height/2 : player.height;
-            const playerY = player.y - playerHeight;
-            ctx.fillRect(player.x - player.width/2, playerY, player.width, playerHeight);
-
-            // Draw player details
-            ctx.fillStyle = '#000';
-            ctx.fillRect(player.x - 5, playerY + 10, 10, 5); // Eyes
-            ctx.fillRect(player.x - 5, playerY + 20, 10, 5); // Mouth
+            // Draw player with animation
+            drawAnimatedPlayer();
 
             // Update UI
             document.getElementById('score').textContent = score;
             document.getElementById('coins').textContent = coins;
             document.getElementById('speed').textContent = gameSpeed.toFixed(1);
+        }
+
+        // Draw animated player
+        function drawAnimatedPlayer() {
+            const playerHeight = player.isSliding ? player.height/2 : player.height;
+            const playerY = player.y - playerHeight;
+            const centerX = player.x;
+            const centerY = playerY + playerHeight/2;
+
+            // Player body (rounded rectangle)
+            ctx.fillStyle = '#2196F3';
+            ctx.strokeStyle = '#1976D2';
+            ctx.lineWidth = 2;
+            
+            // Create rounded rectangle
+            const radius = 8;
+            ctx.beginPath();
+            ctx.roundRect(centerX - player.width/2, playerY, player.width, playerHeight, radius);
+            ctx.fill();
+            ctx.stroke();
+
+            // Player head (circle)
+            const headRadius = 12;
+            const headY = playerY + 15;
+            ctx.fillStyle = '#FFE0B2';
+            ctx.beginPath();
+            ctx.arc(centerX, headY, headRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Animated eyes
+            const eyeOffset = Math.sin(animationTime * 3) * 2;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(centerX - 4 + eyeOffset, headY - 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(centerX + 4 + eyeOffset, headY - 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Animated mouth
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (player.isJumping) {
+                // Happy mouth when jumping
+                ctx.arc(centerX, headY + 2, 4, 0, Math.PI);
+            } else {
+                // Normal mouth
+                ctx.moveTo(centerX - 3, headY + 2);
+                ctx.lineTo(centerX + 3, headY + 2);
+            }
+            ctx.stroke();
+
+            // Arms (animated)
+            const armSwing = Math.sin(animationTime * 4) * 5;
+            ctx.strokeStyle = '#FFE0B2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(centerX - player.width/2, playerY + 20);
+            ctx.lineTo(centerX - player.width/2 - 10 + armSwing, playerY + 30);
+            ctx.moveTo(centerX + player.width/2, playerY + 20);
+            ctx.lineTo(centerX + player.width/2 + 10 - armSwing, playerY + 30);
+            ctx.stroke();
+
+            // Legs (animated)
+            const legSwing = Math.sin(animationTime * 6) * 3;
+            ctx.strokeStyle = '#1976D2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 5, playerY + playerHeight);
+            ctx.lineTo(centerX - 8 + legSwing, playerY + playerHeight + 15);
+            ctx.moveTo(centerX + 5, playerY + playerHeight);
+            ctx.lineTo(centerX + 8 - legSwing, playerY + playerHeight + 15);
+            ctx.stroke();
+        }
+
+        // Draw animated obstacles
+        function drawAnimatedObstacle(obstacle) {
+            const centerX = obstacle.x;
+            const centerY = obstacle.y + obstacle.height/2;
+            
+            // Obstacle body (diamond shape)
+            ctx.fillStyle = '#FF5722';
+            ctx.strokeStyle = '#D84315';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, obstacle.y); // Top
+            ctx.lineTo(centerX + obstacle.width/2, centerY); // Right
+            ctx.lineTo(centerX, obstacle.y + obstacle.height); // Bottom
+            ctx.lineTo(centerX - obstacle.width/2, centerY); // Left
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Animated warning symbol
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pulsing effect
+            const pulse = Math.sin(animationTime * 8) * 0.3 + 0.7;
+            ctx.fillStyle = `rgba(255, 0, 0, ${pulse})`;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Draw animated coins
+        function drawAnimatedCoin(coin) {
+            const centerX = coin.x;
+            const centerY = coin.y;
+            
+            // Coin outer ring
+            ctx.fillStyle = '#FFD700';
+            ctx.strokeStyle = '#FFC107';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coin.width/2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Animated spinning effect
+            const spinAngle = animationTime * 4;
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(spinAngle);
+            
+            // Inner coin design
+            ctx.fillStyle = '#FFF59D';
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.width/3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Coin symbol ($)
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 8px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('$', 0, 3);
+            
+            ctx.restore();
+
+            // Sparkle effect
+            const sparkleCount = 3;
+            for (let i = 0; i < sparkleCount; i++) {
+                const angle = (animationTime * 2 + i * Math.PI * 2 / sparkleCount) % (Math.PI * 2);
+                const sparkleX = centerX + Math.cos(angle) * (coin.width/2 + 5);
+                const sparkleY = centerY + Math.sin(angle) * (coin.width/2 + 5);
+                
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.sin(animationTime * 6 + i) * 0.5 + 0.5})`;
+                ctx.beginPath();
+                ctx.arc(sparkleX, sparkleY, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         // Game loop
